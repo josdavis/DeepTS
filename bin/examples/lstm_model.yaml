@@ -1,0 +1,74 @@
+---
+"latent_dim_lstm" : &ld 50
+"dropout" : &do 0.5
+"inputs" :
+  "lstm_input" :
+    "shape" : !!python/tuple [null,1]
+    "name" : "ts_input"
+  "total_precip_mm_sum_1_weeks_ago_0_years_ago_input" :
+    "shape" : !!python/tuple [1,]
+    "name" : "total_precip_mm_sum_1_weeks_ago_0_years_ago_input"
+  "trap_crop_input" :
+    "shape" : !!python/tuple [44,]
+    "name" : "trap_crop_input"
+  "dow_input" :
+    "shape" : !!python/tuple [16,]
+    "name" : "week_input"
+
+"layers" :
+  0 :
+    "input" : "ts_input"
+    "output_name" : "lstm_encoder_output"
+    "type" : "LSTM"
+    "type_arguments" :
+      "units" : *ld
+      "dropout" : *do
+      "return_sequences" : False
+  1 :
+    "input" : "trap_crop_input"
+    "output_name" : "trap_crop_dense_output"
+    "type" : "Dense"
+    "type_arguments" :
+      "units" : 5
+  2 :
+    "input" : "week_input"
+    "output_name" : "dow_dense_output"
+    "type" : "Dense"
+    "type_arguments" :
+      "units" : *ld
+  3 :
+    "input" : "total_precip_mm_sum_1_weeks_ago_0_years_ago_input"
+    "output_name" : "total_precip_mm_sum_1_weeks_ago_0_years_ago_dense_output"
+    "type" : "Dense"
+    "type_arguments" :
+      "units" : *ld
+  4 :
+    "input" :
+      - "lstm_encoder_output"
+      - "trap_crop_dense_output"
+      - "dow_dense_output"
+      - "total_precip_mm_sum_1_weeks_ago_0_years_ago_dense_output"
+    "output_name" : "concat_output"
+    "type" : "concatenate"
+    "type_arguments" :
+      "axis" : -1
+  5 :
+    "input" : "concat_output"
+    "output_name" : "prediction_output"
+    "type" : "Dense"
+    "type_arguments" :
+      "units" : 1
+"model" :
+  "inputs" :
+    - "ts_input"
+    - "total_precip_mm_sum_1_weeks_ago_0_years_ago_input"
+    - "trap_crop_input"
+    - "week_input"
+  "outputs" :
+    - "prediction_output"
+  "compile_arguments" :
+    "loss" : "mean_absolute_error"
+    "optimizer" : "adam"
+
+
+...
